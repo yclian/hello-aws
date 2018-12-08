@@ -16,7 +16,7 @@ import request from 'jsonrequest';
  */
 export default (event, context) => {
 
-    console.log("Say something");
+    console.log("Received event: " + JSON.stringify(event));
 
     switch (event.type) {
         case 'create-github-project':
