@@ -1,0 +1,68 @@
+Description: "Stack for Bitbucket to Github migration."
+Resources:
+
+  BitbucketMigratorRole:
+    Type: "AWS::IAM::Role"
+    DeletionPolicy: Delete
+    Properties:
+      RoleName: BitbucketMigrator
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - lambda.amazonaws.com
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies: 
+        - 
+          PolicyName: "BitbucketMigratorPolicy"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+            - Effect: "Allow"
+              Action:
+                - logs:*
+              Resource: "*"
+            - Effect: "Allow"
+              Action:
+                - s3:*
+              Resource:
+              - !Join ["", ["arn:aws:s3:::", !Ref "WorkdirS3Bucket"]]
+            - Effect: "Allow"
+              Action:
+                - xray:PutTelemetryRecords
+                - xray:PutTraceSegments
+              Resource: "*"
+
+  WorkdirS3Bucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: bitbucket-to-github
+      AccessControl: Private
+      Tags:
+        - Key: Environment
+          Value: development
+
+  MigrateBitbucketFunction:
+    Type: "AWS::Lambda::Function"
+    DeletionPolicy: Delete
+    Properties: 
+      FunctionName: bitbucket-to-github-utils
+      Handler: index.handler
+      Code: 
+        ZipFile: fileb://placeholder-for-cf.zip
+      Role:
+        Fn::GetAtt: 
+        - BitbucketMigratorRole
+        - Arn
+      Runtime: nodejs8.10
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Environment
+          Value: development
